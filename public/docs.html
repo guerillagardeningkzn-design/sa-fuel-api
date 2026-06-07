@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SA Fuel Price API — Docs</title>
+  <meta name="description" content="South African fuel price REST API. Monthly DMRE retail prices for 95 ULP, 93 ULP and Diesel."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;900&family=Raleway:wght@300;400;500&family=Syne+Mono&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --black:     #0a0906;
+      --dark:      #110e09;
+      --surface:   #1a1610;
+      --panel:     #211c14;
+      --border:    #2c2619;
+      --border-lt: #3d3526;
+      --gold-dk:   #7a5815;
+      --gold:      #c9943c;
+      --gold-lt:   #e8c87a;
+      --cream:     #f0e6ce;
+      --muted:     #7a6d58;
+      --success:   #4caf7a;
+      --danger:    #c94c4c;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Raleway', sans-serif;
+      background: var(--dark); color: var(--cream);
+      line-height: 1.7;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+    }
+    body > * { position: relative; z-index: 1; }
+
+    /* Nav */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(17,14,9,.92); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .nav-brand {
+      font-family: 'Cinzel', serif; font-size: .82rem;
+      font-weight: 600; letter-spacing: .18em;
+      text-transform: uppercase; color: var(--gold-lt);
+      text-decoration: none; display: flex; align-items: center; gap: .5rem;
+    }
+    .nav-brand .orn { color: var(--gold-dk); }
+    .nav-version {
+      font-family: 'Syne Mono', monospace; font-size: .6rem;
+      letter-spacing: .14em; color: var(--muted);
+    }
+    .nav-links { display: flex; gap: 1.5rem; }
+    .nav-links a {
+      font-family: 'Syne Mono', monospace; font-size: .62rem;
+      letter-spacing: .12em; text-transform: uppercase;
+      color: var(--muted); text-decoration: none; transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--gold-lt); }
+
+    /* Layout */
+    .layout { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+    @media (max-width: 768px) { .layout { grid-template-columns: 1fr; } }
+
+    /* Sidebar */
+    aside {
+      border-right: 1px solid var(--border);
+      padding: 2rem 1.25rem;
+      position: sticky; top: 57px;
+      height: calc(100vh - 57px); overflow-y: auto;
+    }
+    .sidebar-label {
+      font-family: 'Syne Mono', monospace; font-size: .55rem;
+      letter-spacing: .22em; text-transform: uppercase;
+      color: var(--gold-dk); margin-bottom: .75rem; margin-top: 1.5rem;
+    }
+    .sidebar-label:first-child { margin-top: 0; }
+    .sidebar-links { list-style: none; display: flex; flex-direction: column; gap: .15rem; }
+    .sidebar-links a {
+      font-family: 'Syne Mono', monospace; font-size: .65rem;
+      letter-spacing: .08em; color: var(--muted);
+      text-decoration: none; padding: .3rem .5rem;
+      border-radius: 3px; transition: all .15s;
+      display: block;
+    }
+    .sidebar-links a:hover { color: var(--gold-lt); background: rgba(201,148,60,.06); }
+    .method { font-size: .5rem; letter-spacing: .1em; margin-right: .4rem; }
+    .get    { color: var(--success); }
+    .post   { color: var(--gold); }
+    .put    { color: #818cf8; }
+
+    /* Main content */
+    main { padding: 3rem 3rem 6rem; max-width: 860px; }
+
+    /* Sections */
+    section { margin-bottom: 4rem; }
+    h1 { font-family: 'Cinzel', serif; font-size: clamp(2rem,5vw,3.5rem); font-weight: 900; line-height: 1; margin-bottom: 1rem; background: linear-gradient(135deg, var(--gold-lt), var(--gold)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    h2 { font-family: 'Cinzel', serif; font-size: 1.3rem; color: var(--gold-lt); margin-bottom: 1rem; }
+    h3 { font-family: 'Cinzel', serif; font-size: 1rem; color: var(--gold-lt); margin-bottom: .6rem; }
+    p  { font-size: .92rem; font-weight: 300; color: rgba(240,230,206,.7); margin-bottom: .75rem; line-height: 1.8; }
+    a  { color: var(--gold); text-decoration: none; }
+    a:hover { color: var(--gold-lt); }
+
+    /* Endpoint card */
+    .endpoint {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 4px; margin-bottom: 1.5rem; overflow: hidden;
+    }
+    .endpoint-header {
+      display: flex; align-items: center; gap: 1rem;
+      padding: .85rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      background: var(--panel);
+    }
+    .method-badge {
+      font-family: 'Syne Mono', monospace; font-size: .62rem;
+      letter-spacing: .1em; padding: .2rem .65rem;
+      border-radius: 3px; font-weight: 700;
+    }
+    .badge-get  { background: rgba(76,175,122,.12); color: var(--success); border: 1px solid rgba(76,175,122,.3); }
+    .badge-post { background: rgba(201,148,60,.12); color: var(--gold);    border: 1px solid rgba(201,148,60,.3); }
+    .badge-put  { background: rgba(129,140,248,.12); color: #818cf8;       border: 1px solid rgba(129,140,248,.3); }
+    .endpoint-path {
+      font-family: 'Syne Mono', monospace; font-size: .82rem;
+      color: var(--cream); letter-spacing: .04em;
+    }
+    .endpoint-auth {
+      margin-left: auto;
+      font-family: 'Syne Mono', monospace; font-size: .55rem;
+      letter-spacing: .1em; color: var(--gold-dk);
+    }
+    .endpoint-body { padding: 1.25rem; }
+    .endpoint-desc { font-size: .88rem; font-weight: 300; color: rgba(240,230,206,.65); margin-bottom: 1rem; }
+
+    /* Params table */
+    .params { width: 100%; border-collapse: collapse; margin-bottom: 1rem; }
+    .params th {
+      font-family: 'Syne Mono', monospace; font-size: .58rem;
+      letter-spacing: .14em; text-transform: uppercase; color: var(--gold-dk);
+      padding: .5rem .75rem; border-bottom: 1px solid var(--border);
+      text-align: left;
+    }
+    .params td { padding: .5rem .75rem; font-size: .82rem; font-weight: 300; color: rgba(240,230,206,.7); border-bottom: 1px solid var(--border); }
+    .params tr:last-child td { border-bottom: none; }
+    .params code { font-family: 'Syne Mono', monospace; font-size: .78rem; color: var(--gold-lt); background: var(--panel); padding: .1rem .35rem; border-radius: 2px; }
+    .optional { color: var(--muted); font-size: .72rem; }
+    .required { color: var(--danger); font-size: .72rem; }
+
+    /* Code block */
+    pre {
+      background: var(--black); border: 1px solid var(--border);
+      border-radius: 4px; padding: 1.25rem; overflow-x: auto;
+      margin-bottom: .75rem;
+    }
+    pre code {
+      font-family: 'Syne Mono', monospace; font-size: .78rem;
+      line-height: 1.7; color: var(--cream);
+    }
+    .str  { color: #86efac; }
+    .num  { color: #93c5fd; }
+    .key  { color: var(--gold-lt); }
+    .bool { color: #f9a8d4; }
+
+    /* Inline code */
+    code {
+      font-family: 'Syne Mono', monospace; font-size: .8rem;
+      background: var(--panel); border: 1px solid var(--border);
+      border-radius: 2px; padding: .1rem .4rem; color: var(--gold-lt);
+    }
+
+    /* Divider */
+    .divider {
+      height: 1px; margin: 3rem 0;
+      background: linear-gradient(90deg, transparent, var(--border-lt) 30%, var(--border-lt) 70%, transparent);
+    }
+
+    /* Badge row */
+    .badges { display: flex; gap: .6rem; flex-wrap: wrap; margin-bottom: 2rem; }
+    .badge {
+      font-family: 'Syne Mono', monospace; font-size: .58rem;
+      letter-spacing: .12em; text-transform: uppercase;
+      padding: .3rem .8rem; border-radius: 50px; border: 1px solid;
+    }
+    .badge-gold   { color: var(--gold);    border-color: var(--gold-dk);  background: rgba(201,148,60,.08); }
+    .badge-green  { color: var(--success); border-color: var(--success);  background: rgba(76,175,122,.08); }
+    .badge-purple { color: #818cf8;        border-color: rgba(129,140,248,.4); background: rgba(129,140,248,.08); }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <a href="/" class="nav-brand"><span class="orn">✦</span> SA Fuel API</a>
+    <span class="nav-version">v1.0.0</span>
+    <div class="nav-links">
+      <a href="#quickstart">Quickstart</a>
+      <a href="#endpoints">Endpoints</a>
+      <a href="#responses">Responses</a>
+    </div>
+  </nav>
+
+  <div class="layout">
+
+    <aside>
+      <p class="sidebar-label">Reference</p>
+      <ul class="sidebar-links">
+        <li><a href="#quickstart">Quickstart</a></li>
+        <li><a href="#auth">Authentication</a></li>
+        <li><a href="#rate-limits">Rate Limits</a></li>
+        <li><a href="#responses">Response Format</a></li>
+      </ul>
+
+      <p class="sidebar-label">Endpoints</p>
+      <ul class="sidebar-links">
+        <li><a href="#get-all"><span class="method get">GET</span> /v1/prices</a></li>
+        <li><a href="#get-latest"><span class="method get">GET</span> /v1/prices/latest</a></li>
+        <li><a href="#get-by-month"><span class="method get">GET</span> /v1/prices/:month</a></li>
+        <li><a href="#get-range"><span class="method get">GET</span> /v1/prices/range</a></li>
+        <li><a href="#get-stats"><span class="method get">GET</span> /v1/stats</a></li>
+        <li><a href="#post-price"><span class="method post">POST</span> /v1/prices</a></li>
+        <li><a href="#put-price"><span class="method put">PUT</span> /v1/prices/:month</a></li>
+      </ul>
+    </aside>
+
+    <main>
+
+      <section id="intro">
+        <h1>SA Fuel Price API</h1>
+        <div class="badges">
+          <span class="badge badge-green">Free</span>
+          <span class="badge badge-gold">No API Key for reads</span>
+          <span class="badge badge-purple">South Africa</span>
+        </div>
+        <p>
+          Monthly South African fuel retail prices as published by the
+          Department of Mineral Resources and Energy (DMRE). Prices are in
+          Rands per litre and cover 95 ULP, 93 ULP and Diesel (0.05% sulphur)
+          for inland and coastal zones.
+        </p>
+        <p>
+          Data runs from January 2024 to present and is updated monthly
+          on the first Wednesday of each month.
+        </p>
+        <p>Base URL: <code>https://sa-fuel-api.railway.app</code></p>
+      </section>
+
+      <div class="divider"></div>
+
+      <section id="quickstart">
+        <h2>Quickstart</h2>
+        <p>All read endpoints are open — no API key needed.</p>
+        <pre><code><span class="com">// Fetch latest prices</span>
+fetch('<span class="str">https://sa-fuel-api.railway.app/v1/prices/latest</span>')
+  .then(r => r.json())
+  .then(data => console.log(data));
+
+<span class="com">// Get 12 months history</span>
+fetch('<span class="str">https://sa-fuel-api.railway.app/v1/prices?limit=12</span>')
+  .then(r => r.json())
+  .then(data => console.log(data.data));</code></pre>
+      </section>
+
+      <div class="divider"></div>
+
+      <section id="auth">
+        <h2>Authentication</h2>
+        <p>Read endpoints (<code>GET</code>) are public. Write endpoints (<code>POST</code>, <code>PUT</code>) require an API key.</p>
+        <pre><code><span class="com">// Option A — Authorization header (recommended)</span>
+fetch('/v1/prices', {
+  method: '<span class="str">POST</span>',
+  headers: { '<span class="key">Authorization</span>': '<span class="str">Bearer YOUR_API_KEY</span>' },
+  body: JSON.stringify({ ... })
+});
+
+<span class="com">// Option B — Query param</span>
+fetch('/v1/prices?api_key=YOUR_API_KEY', { method: 'POST', ... });</code></pre>
+      </section>
+
+      <section id="rate-limits">
+        <h2>Rate Limits</h2>
+        <table class="params">
+          <thead><tr><th>Endpoint type</th><th>Limit</th><th>Window</th></tr></thead>
+          <tbody>
+            <tr><td>Read (GET)</td><td>100 requests</td><td>15 minutes</td></tr>
+            <tr><td>Write (POST, PUT)</td><td>20 requests</td><td>1 hour</td></tr>
+          </tbody>
+        </table>
+        <p>Rate limit headers are returned on every response: <code>RateLimit-Limit</code>, <code>RateLimit-Remaining</code>, <code>RateLimit-Reset</code>.</p>
+      </section>
+
+      <section id="responses">
+        <h2>Response Format</h2>
+        <p>All responses are JSON. Successful responses include <code>success: true</code> and a <code>data</code> field. Errors include <code>success: false</code> and an <code>error</code> object.</p>
+        <pre><code><span class="com">// Success</span>
+{
+  "<span class="key">success</span>": <span class="bool">true</span>,
+  "<span class="key">data</span>": {
+    "<span class="key">month</span>":      "<span class="str">2026-05</span>",
+    "<span class="key">monthLabel</span>": "<span class="str">May 2026</span>",
+    "<span class="key">prices</span>": {
+      "<span class="key">petrol</span>": { "<span class="key">p95Inland</span>": <span class="num">26.63</span>, "<span class="key">p95Coastal</span>": <span class="num">25.76</span>, "<span class="key">p93Inland</span>": <span class="num">26.52</span> },
+      "<span class="key">diesel</span>": { "<span class="key">d005Inland</span>": <span class="num">31.18</span>, "<span class="key">d005Coastal</span>": <span class="num">30.30</span> }
+    },
+    "<span class="key">source</span>":    "<span class="str">DMRE</span>",
+    "<span class="key">updatedAt</span>": "<span class="str">2026-05-06T00:00:00.000Z</span>"
+  }
+}
+
+<span class="com">// Error</span>
+{
+  "<span class="key">success</span>": <span class="bool">false</span>,
+  "<span class="key">error</span>": { "<span class="key">code</span>": "<span class="str">NOT_FOUND</span>", "<span class="key">message</span>": "<span class="str">No prices found for 2024-13.</span>" }
+}</code></pre>
+      </section>
+
+      <div class="divider"></div>
+
+      <section id="endpoints">
+        <h2>Endpoints</h2>
+
+        <!-- GET /v1/prices -->
+        <div class="endpoint" id="get-all">
+          <div class="endpoint-header">
+            <span class="method-badge badge-get">GET</span>
+            <span class="endpoint-path">/v1/prices</span>
+          </div>
+          <div class="endpoint-body">
+            <p class="endpoint-desc">Returns all months, newest first. Paginate with <code>limit</code> and <code>offset</code>.</p>
+            <table class="params">
+              <thead><tr><th>Param</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td><code>limit</code></td><td>integer</td><td>50</td><td>Max rows (cap 200) <span class="optional">optional</span></td></tr>
+                <tr><td><code>offset</code></td><td>integer</td><td>0</td><td>Skip rows <span class="optional">optional</span></td></tr>
+              </tbody>
+            </table>
+            <pre><code>GET /v1/prices?limit=12</code></pre>
+          </div>
+        </div>
+
+        <!-- GET /v1/prices/latest -->
+        <div class="endpoint" id="get-latest">
+          <div class="endpoint-header">
+            <span class="method-badge badge-get">GET</span>
+            <span class="endpoint-path">/v1/prices/latest</span>
+          </div>
+          <div class="endpoint-body">
+            <p class="endpoint-desc">Returns the most recent month's prices only.</p>
+            <pre><code>GET /v1/prices/latest</code></pre>
+          </div>
+        </div>
+
+        <!-- GET /v1/prices/:month -->
+        <div class="endpoint" id="get-by-month">
+          <div class="endpoint-header">
+            <span class="method-badge badge-get">GET</span>
+            <span class="endpoint-path">/v1/prices/:month</span>
+          </div>
+          <div class="endpoint-body">
+            <p class="endpoint-desc">Returns prices for a specific month. Month must be in <code>YYYY-MM</code> format.</p>
+            <pre><code>GET /v1/prices/2026-05
+GET /v1/prices/2025-01</code></pre>
+          </div>
+        </div>
+
+        <!-- GET /v1/prices/range -->
+        <div class="endpoint" id="get-range">
+          <div class="endpoint-header">
+            <span class="method-badge badge-get">GET</span>
+            <span class="endpoint-path">/v1/prices/range</span>
+          </div>
+          <div class="endpoint-body">
+            <p class="endpoint-desc">Returns all months within an inclusive date range.</p>
+            <table class="params">
+              <thead><tr><th>Param</th><th>Type</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td><code>from</code></td><td>YYYY-MM</td><td>Start month <span class="required">required</span></td></tr>
+                <tr><td><code>to</code></td><td>YYYY-MM</td><td>End month <span class="required">required</span></td></tr>
+              </tbody>
+            </table>
+            <pre><code>GET /v1/prices/range?from=2025-01&to=2025-12</code></pre>
+          </div>
+        </div>
+
+        <!-- GET /v1/stats -->
+        <div class="endpoint" id="get-stats">
+          <div class="endpoint-header">
+            <span class="method-badge badge-get">GET</span>
+            <span class="endpoint-path">/v1/stats</span>
+          </div>
+          <div class="endpoint-body">
+            <p class="endpoint-desc">Returns aggregate statistics — min, max and average prices across all months.</p>
+            <pre><code>GET /v1/stats</code></pre>
+          </div>
+        </div>
+
+        <!-- POST /v1/prices -->
+        <div class="endpoint" id="post-price">
+          <div class="endpoint-header">
+            <span class="method-badge badge-post">POST</span>
+            <span class="endpoint-path">/v1/prices</span>
+            <span class="endpoint-auth">🔑 API key required</span>
+          </div>
+          <div class="endpoint-body">
+            <p class="endpoint-desc">Add a new month's prices. Returns <code>409 Conflict</code> if the month already exists.</p>
+            <table class="params">
+              <thead><tr><th>Field</th><th>Type</th><th></th></tr></thead>
+              <tbody>
+                <tr><td><code>month</code></td><td>YYYY-MM</td><td><span class="required">required</span></td></tr>
+                <tr><td><code>monthLabel</code></td><td>string</td><td><span class="required">required</span> e.g. "Jun 2026"</td></tr>
+                <tr><td><code>p95i</code></td><td>number</td><td><span class="required">required</span> 95 ULP Inland</td></tr>
+                <tr><td><code>p95c</code></td><td>number</td><td><span class="required">required</span> 95 ULP Coastal</td></tr>
+                <tr><td><code>p93i</code></td><td>number</td><td><span class="required">required</span> 93 ULP Inland</td></tr>
+                <tr><td><code>d005i</code></td><td>number</td><td><span class="required">required</span> Diesel 0.05% Inland</td></tr>
+                <tr><td><code>d005c</code></td><td>number</td><td><span class="required">required</span> Diesel 0.05% Coastal</td></tr>
+                <tr><td><code>source</code></td><td>string</td><td><span class="optional">optional</span> defaults to "DMRE"</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- PUT /v1/prices/:month -->
+        <div class="endpoint" id="put-price">
+          <div class="endpoint-header">
+            <span class="method-badge badge-put">PUT</span>
+            <span class="endpoint-path">/v1/prices/:month</span>
+            <span class="endpoint-auth">🔑 API key required</span>
+          </div>
+          <div class="endpoint-body">
+            <p class="endpoint-desc">Update one or more price fields for an existing month. Only supplied fields are updated.</p>
+            <pre><code><span class="com">// Correct a single price</span>
+PUT /v1/prices/2026-05
+{ "<span class="key">p95i</span>": <span class="num">26.71</span> }</code></pre>
+          </div>
+        </div>
+
+      </section>
+
+      <div class="divider"></div>
+
+      <section>
+        <h2>Data source</h2>
+        <p>Prices are sourced from the DMRE monthly gazette and cross-referenced with the Fuels Industry Association of South Africa (FIASA). New prices are published on the first Wednesday of each month and take effect from midnight.</p>
+        <p>Prices are in Rands per litre and include all levies, taxes and fuel levies as gazetted. Inland prices apply to Gauteng; coastal prices apply to Durban, Cape Town and Port Elizabeth.</p>
+      </section>
+
+    </main>
+  </div>
+
+</body>
+</html>
