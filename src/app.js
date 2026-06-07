@@ -37,6 +37,10 @@ app.get('/', (req, res) => {
     },
   });
 });
+// Redirect /docs → /docs.html
+app.get('/docs', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/docs.html'));
+});
 
 // ── API routes ─────────────────────────── //
 app.use('/v1/prices', publicLimiter,  pricesRouter);
